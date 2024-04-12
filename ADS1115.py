@@ -7,7 +7,9 @@
 from smbus2 import SMBus
 from datetime import datetime, timedelta
 
-def ADS_Read_A0():
+ADS1115_Addr = 0x48
+
+def readA0():
 	# Get I2C bus
 	bus = SMBus(1)
 
@@ -15,7 +17,7 @@ def ADS_Read_A0():
 	# Select configuration register, 0x01(01)
 	#		0xC483(50307)	AINP = AIN0 and AINN = GND, +/- 2.048V
 	#				Continuous conversion mode, 128SPS
-	data = [0xC4,0x83]
+	data = [0xC0,0x03]
 	bus.write_i2c_block_data(0x48, 0x01, data)
 
 #	time = datetime.now()
@@ -34,7 +36,7 @@ def ADS_Read_A0():
 	if raw_adc > 32767:
 		raw_adc -= 65535
 
-	raw_adc  = 2 + (raw_adc * 3.5 / 32767)
+	raw_adc  = (raw_adc * 6.144 / 32767)
 
 	# # Output data to screen
 	# print ("Digital Value of Analog Input on Channel-0: %.2f" %raw_adc)
@@ -42,7 +44,7 @@ def ADS_Read_A0():
 
 	return raw_adc
 
-def ADS_Read_A1():
+def readA1():
 	# Get I2C bus
 	bus = SMBus(1)
 
@@ -50,7 +52,7 @@ def ADS_Read_A1():
 	# Select configuration register, 0x01(01)
 	#		0xD483(54403)	AINP = AIN1 and AINN = GND, +/- 2.048V
 	#				Continuous conversion mode, 128SPS
-	data = [0xD4,0x83]
+	data = [0xD0,0x03]
 	bus.write_i2c_block_data(0x48, 0x01, data)
 
 #	time = datetime.now()
@@ -68,24 +70,33 @@ def ADS_Read_A1():
 	if raw_adc > 32767:
 		raw_adc -= 65535
 
-	raw_adc  = 2 + (raw_adc * 3.5 / 32767)
+	raw_adc  = (raw_adc * 6.144 / 32767)
 
 	# Output data to screen
 	#print ("Digital Value of Analog Input on Channel-1: %d" %raw_adc)
 
 	return raw_adc
 
-def ADS_Test():
+def testModule():
+	value0 = readA0()
+	print ("Digital Value of Analog Input on Channel-0: %.2f" %value0)
+
+	while (datetime.now() - time) < timedelta(seconds = 1):
+		continue
+	time = datetime.now()
+
+	value1 = readA1()
+	print ("Digital Value of Analog Input on Channel-1: %.2f" %value1)
+
+	return
+
+
+if __name__ == "__main__":
 	time = datetime.now()
 	while True:
 		if (datetime.now() - time) > timedelta(seconds = 1):
 			time = datetime.now()
-			value = ADS_Read_A0()
-			print ("Digital Value of Analog Input on Channel-0: %.2f" %value)
-			value = ADS_Read_A1()
-			print ("Digital Value of Analog Input on Channel-1: %.2f" %value)
-
-ADS_Test()
+			testModule()
 
 # ADS1115 address, 0x48(72)
 # Select configuration register, 0x01(01)
