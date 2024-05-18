@@ -39,6 +39,7 @@ def init():
 
 def read_raw_data(addr):
 	# Setup
+	init()
 	bus = SMBus(1) # or bus = smbus.SMBus(0) for older version boards
 	#Device_Address = 0x68 # MPU6050 device address
 
@@ -55,38 +56,73 @@ def read_raw_data(addr):
 	return value
 
 
-def readData():
-	# Read Accelerometer raw value
+def readAccX():
 	acc_x = read_raw_data(ACCEL_XOUT_H)
-	acc_y = read_raw_data(ACCEL_YOUT_H)
-	acc_z = read_raw_data(ACCEL_ZOUT_H)
-
-	#Read Gyroscope raw value
-	gyro_x = read_raw_data(GYRO_XOUT_H)
-	gyro_y = read_raw_data(GYRO_YOUT_H)
-	gyro_z = read_raw_data(GYRO_ZOUT_H)
-
-	#Read Temperature raw value
-	temp = read_raw_data(TEMP_OUT)
-
 	#Full scale range +/- 250 degree/C as per sensitivity scale factor
 	Ax = acc_x/16384.0
+	return Ax
+
+
+def readAccY():
+	acc_y = read_raw_data(ACCEL_YOUT_H)
+	#Full scale range +/- 250 degree/C as per sensitivity scale factor
 	Ay = acc_y/16384.0
+	return Ay
+
+
+def readAccZ():
+	acc_z = read_raw_data(ACCEL_ZOUT_H)
+	#Full scale range +/- 250 degree/C as per sensitivity scale factor
 	Az = acc_z/16384.0
+	return Az
 
+
+def readGyroX():
+	gyro_x = read_raw_data(GYRO_XOUT_H)
+	#Full scale range +/- 250 degree/C as per sensitivity scale factor
 	Gx = gyro_x/131.0
-	Gy = gyro_y/131.0
-	Gz = gyro_z/131.0
+	return Gx
 
-	T = (temp/340) + 36.53
+
+def readGyroY():
+	gyro_y = read_raw_data(GYRO_YOUT_H)
+	#Full scale range +/- 250 degree/C as per sensitivity scale factor
+	Gy = gyro_y/131.0
+	return Gy
+
+
+def readGyroZ():
+	gyro_z = read_raw_data(GYRO_ZOUT_H)
+	#Full scale range +/- 250 degree/C as per sensitivity scale factor
+	Gz = gyro_z/131.0
+	return Gz
+
+
+def readTemperature():
+	temp = read_raw_data(TEMP_OUT)
+	#Full scale range +/- 250 degree/C as per sensitivity scale factor
+	T = (temp / 340) + 36.53
+	return T
+
+
+def readData():
+	Ax = readAccX()
+	Ay = readAccY()
+	Az = readAccZ()
+
+	Gx = readGyroX()
+	Gy = readGyroY()
+	Gz = readGyroZ()
+
+	T = readTemperature()
 
 	return [Ax, Ay, Az, Gx, Gy, Gz, T]
 
 
 def testModule():
-	init()
+#	init()
 
-	print (" Reading Data of Gyroscope and Accelerometer")
+	print (" Reading Data of Gyroscope, Accelerometer and Temperature")
 	Ax, Ay, Az, Gx, Gy, Gz, T = readData()
 	print ("Gx=%.2f" %Gx, u'\u00b0'+ "/s", "\tGy=%.2f" %Gy, u'\u00b0'+ "/s", "\tGz=%.2f" %Gz, u'\u00b0'+ "/s", "\tAx=%.2f g" %Ax, "\tAy=%.2f g" %Ay, "\tAz=%.2f g" %Az, "\tTemperature=%.2f" %T)
 #	print (f"Ax = {Ax}, Ay = {Ay}, Az = {Az}, Gx = {Gx}, Gy = {Gy}, Gz = {Gz}, T = {T}")
