@@ -23,7 +23,7 @@ import csv
 import time
 from datetime import datetime, timedelta, timezone
 # import FSW Data Module
-import fsw_data as Data
+import FSW_DATA as Data
 # import electronics libraries
 from digi.xbee.devices import XBeeDevice, RemoteXBeeDevice, XBee64BitAddress # XBee
 import AHT21B	# Temperature
