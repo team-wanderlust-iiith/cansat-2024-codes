@@ -16,7 +16,7 @@ def convTemp(address):
 	byte_control = bus.read_byte_data(address, 0x0E)
 
 	while byte_control&CONV != 0:
-		time.sleep(1)
+		sleep(1)
 		byte_control = bus.read_byte_data(address, 0x0E)
 
 	return True

@@ -20,9 +20,9 @@ def readA0():
 	data = [0xC0,0x03]
 	bus.write_i2c_block_data(0x48, 0x01, data)
 
-#	time = datetime.now()
-#	while (datetime.now() - time) < timedelta(seconds = 0.5):
-#		pass
+	#	time = datetime.now()
+	#	while (datetime.now() - time) < timedelta(seconds = 0.5):
+	#		pass
 
 	# ADS1115 address, 0x48(72)
 	# Read data back from 0x00(00), 2 bytes
@@ -55,9 +55,9 @@ def readA1():
 	data = [0xD0,0x03]
 	bus.write_i2c_block_data(0x48, 0x01, data)
 
-#	time = datetime.now()
-#	while (datetime.now() - time) < timedelta(seconds = 0.5):
-#		pass
+	#	time = datetime.now()
+	#	while (datetime.now() - time) < timedelta(seconds = 0.5):
+	#		pass
 
 	# ADS1115 address, 0x48(72)
 	# Read data back from 0x00(00), 2 bytes
