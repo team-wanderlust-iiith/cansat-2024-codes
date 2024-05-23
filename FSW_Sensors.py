@@ -26,8 +26,8 @@ class Sensors:
 		self._bmp390_altitude: float = None
 		## ADS1115
 		self._ads1115 = ADS1115_Sensor()
-		self._ads1115_channel_0: float = None
-		self._ads1115_channel_1: float = None
+		self._ads1115_voltage_channel_0: float = None
+		self._ads1115_voltage_channel_1: float = None
 		# self._ads1115_voltage: float = None
 		## AHT21B
 		self._aht21b = AHT21B_Sensor()
@@ -72,7 +72,7 @@ class Sensors:
 	def _update_bmp390_values(self) -> List[float]:
 		"""
 		Function to update values from BMP390.
-		
+
 		Returns:
 			`temperature`, `pressure`, `altitude` readings from BMP390.
 		"""
@@ -86,18 +86,18 @@ class Sensors:
 	def _update_ads1115_values(self) -> List[float]:
 		"""
 		Function to update values from ADS1115.
-		
+
 		Returns:
 			`channel_0_voltage`, `channel_1_voltage` readings from ADS1115.
 		"""
-		self._ads1115_channel_0, self._ads1115_channel_1 = self._ads1115.read_values()
+		self._ads1115_voltage_channel_0, self._ads1115_voltage_channel_1 = self._ads1115.read_values()
 
-		return self._ads1115_channel_0, self._ads1115_channel_1
+		return self._ads1115_voltage_channel_0, self._ads1115_voltage_channel_1
 
 	def _update_aht21b_values(self) -> List[float]:
 		"""
 		Function to update temperature from AHT21B.
-		
+
 		Returns:
 			`temperature` reading from AHT21B.
 		"""
@@ -108,7 +108,7 @@ class Sensors:
 	def _update_mpu6050_values(self) -> List[float]:
 		"""
 		Function to update values from MPU6050.
-		
+
 		Returns:
 			`temperature` reading from MPU6050.
 		"""
@@ -135,21 +135,92 @@ class Sensors:
 	def _update_ms4525do_values(self) -> List[float]:
 		"""
 		Function to update values from MS4525DO.
-		
+
 		Returns:
 			`pressure`, `air_speed` readings from MS4525DO.
 		"""
 		self._ms4525do_pressure, self._ms4525do_air_speed = self._ms4525do.read_values()
 
 		return self._ms4525do_pressure, self._ms4525do_air_speed
-	
+
 	def _update_ds3231_values(self) -> tuple[List[int], str]:
 		"""
 		Function to update values from DS3231.
-		
+
 		Returns:
 			`raw_time`, `telemetry_time` readings from DS3231.
 		"""
 		self._ds3231_raw_time, self._ds3231_telemetry_time = self._ds3231.read_values()
 
 		return self._ds3231_raw_time, self._ds3231_telemetry_time
+
+	def _calc_pressure(self) -> float:
+		pressure = 0
+		self._bmp390_pressure
+		self._ms4525do_pressure
+
+		return pressure
+
+	def _calc_temperature(self) -> float:
+		temperature = 0
+		self._aht21b_temperature
+		self._bmp390_temperature
+		self._mpu6050_temperature
+
+		return temperature
+
+	def _calc_voltage(self) -> float:
+		return self._ads1115_voltage_channel_0
+
+	def update_sensor_values(self):
+		self._update_ads1115_values()
+		self._update_aht21b_values()
+		self._update_bmp390_values()
+		self._update_ds3231_values()
+		self._update_mpu6050_values()
+		self._update_ms4525do_values()
+
+		return
+
+	def update_values(self, update_raw=False):
+		if update_raw:
+			self.update_sensor_values()
+
+		self.air_speed = self._ms4525do_air_speed
+		self.altitude = self._bmp390_altitude
+		# self.GPS_altitude
+		# self.GPS_latitude
+		# self.GPS_longitude
+		# self.GPS_sats
+		# self.GPS_time
+		self.optional_data = ""
+		self.pressure = self._calc_pressure()
+		self.rotation_Z = self._mpu6050_gyro_z
+		self.temperature = self._calc_temperature()
+		# self.tilt_X
+		# self.tilt_Y
+		self.voltage = self._calc_voltage()
+
+		return
+
+	def read_values(self) -> list:
+		return [
+			self.altitude,
+			self.air_speed,
+			self.temperature,
+			self.pressure,
+			self.voltage,
+			self.GPS_time,
+			self.GPS_altitude,
+			self.GPS_latitude,
+			self.GPS_longitude,
+			self.GPS_sats,
+			self.tilt_X,
+			self.tilt_Y,
+			self.rotation_Z,
+			self.optional_data
+		]
+
+	def get_values(self, update_raw=False) -> list:
+		self.update_values(update_raw)
+		return self.read_values()

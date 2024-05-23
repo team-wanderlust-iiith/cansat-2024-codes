@@ -26,11 +26,11 @@ from datetime import datetime, timedelta, timezone
 import FSW_Data as Data
 # import electronics libraries
 from digi.xbee.devices import XBeeDevice, RemoteXBeeDevice, XBee64BitAddress # XBee
-import AHT21B	# Temperature
+# import AHT21B	# Temperature
 # import BMP390 # Altitude, Pressure, Temperature
-from BMP390 import BMP390_Sensor
-import MPU6050	# Aceeleration, Gyroscope, Temperature
-import MS4525DO	# Air Speed
+# from BMP390 import BMP390_Sensor
+# import MPU6050	# Aceeleration, Gyroscope, Temperature
+# import MS4525DO	# Air Speed
 from FSW_Sensors import Sensors
 
 # global constants
@@ -52,11 +52,11 @@ PANID = b"\x20\x85" # HEX 2085
 
 # Instantiate a local XBee object for CANSAT.
 cansat = XBeeDevice(CANSAT_PORT, CANSAT_BAUD_RATE)
-# Open CANSAT connection.
-cansat.open()
-# Set the PAN ID and destination address of the device.
-cansat.set_pan_id(bytearray(PANID))
-cansat.set_dest_address(GROUND_STATION_XBEE_64BIT_ADDRESS)
+# # Open CANSAT connection.
+# cansat.open()
+# # Set the PAN ID and destination address of the device.
+# cansat.set_pan_id(bytearray(PANID))
+# cansat.set_dest_address(GROUND_STATION_XBEE_64BIT_ADDRESS)
 
 # Instantiate a remote XBee object for Ground Station.
 gnd_station = RemoteXBeeDevice(cansat, GROUND_STATION_XBEE_64BIT_ADDRESS)
@@ -111,29 +111,30 @@ def get_sensor_data():
 	# <ROT_Z>, <CMD_ECHO>
 
 	# Read sensor data
+	data = sensors.get_values(True)
 
-	data = {}
-	# data[Data.attribute_idx["altitude"]] = BMP390.readAltitude()
-	data[Data.attribute_idx["altitude"]] = sensors.altitude
-	# data[Data.attribute_idx["air_speed"]] = MS4525DO.readAirSpeed()
-	data[Data.attribute_idx["air_speed"]] = sensors.air_speed
-	# HS_deployed
-	# PC_deployed
-	# data[Data.attribute_idx["temperature"]] = AHT21B.readTemperature()
-	data[Data.attribute_idx["temperature"]] = sensors.temperature
-	# data[Data.attribute_idx["pressure"]] = BMP390.readPressure()
-	data[Data.attribute_idx["pressure"]] = sensors.pressure
-	data[Data.attribute_idx["voltage"]] = sensors.voltage
-	data[Data.attribute_idx["GPS_time"]] = sensors.voltage
-	data[Data.attribute_idx["GPS_altitude"]] = sensors.voltage
-	data[Data.attribute_idx["GPS_latitude"]] = sensors.voltage
-	data[Data.attribute_idx["GPS_longitude"]] = sensors.voltage
-	data[Data.attribute_idx["GPS_sats"]] = sensors.voltage
-	# data[Data.attribute_idx["tiltX"]] = MPU6050.readGyroX()
-	# data[Data.attribute_idx["tiltY"]] = MPU6050.readGyroY()
-	data[Data.attribute_idx["tiltX"]] = sensors.tilt_X
-	data[Data.attribute_idx["tiltY"]] = sensors.tilt_Y
-	data[Data.attribute_idx["rotZ"]] = sensors.rotation_Z
+	# data = {}
+	# # data[Data.attribute_idx["altitude"]] = BMP390.readAltitude()
+	# data[Data.attribute_idx["altitude"]] = sensors.altitude
+	# # data[Data.attribute_idx["air_speed"]] = MS4525DO.readAirSpeed()
+	# data[Data.attribute_idx["air_speed"]] = sensors.air_speed
+	# # HS_deployed
+	# # PC_deployed
+	# # data[Data.attribute_idx["temperature"]] = AHT21B.readTemperature()
+	# data[Data.attribute_idx["temperature"]] = sensors.temperature
+	# # data[Data.attribute_idx["pressure"]] = BMP390.readPressure()
+	# data[Data.attribute_idx["pressure"]] = sensors.pressure
+	# data[Data.attribute_idx["voltage"]] = sensors.voltage
+	# data[Data.attribute_idx["GPS_time"]] = sensors.voltage
+	# data[Data.attribute_idx["GPS_altitude"]] = sensors.voltage
+	# data[Data.attribute_idx["GPS_latitude"]] = sensors.voltage
+	# data[Data.attribute_idx["GPS_longitude"]] = sensors.voltage
+	# data[Data.attribute_idx["GPS_sats"]] = sensors.voltage
+	# # data[Data.attribute_idx["tiltX"]] = MPU6050.readGyroX()
+	# # data[Data.attribute_idx["tiltY"]] = MPU6050.readGyroY()
+	# data[Data.attribute_idx["tiltX"]] = sensors.tilt_X
+	# data[Data.attribute_idx["tiltY"]] = sensors.tilt_Y
+	# data[Data.attribute_idx["rotZ"]] = sensors.rotation_Z
 
 	# telemetry = "{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{}".format(
 	# 	gl_TEAM_ID,
@@ -367,9 +368,9 @@ if __name__ == "__main__":
 	while True:  # this is the loop of the flight software
 		# get data from the sensors
 		parsed_sensor_data = get_sensor_data()
-		parsed_data = sensor_data_to_telemetry_format(parsed_sensor_data)
-		if gl_mode == "SIM":
-			parsed_sensor_data[Data.attribute_idx["Pressure"]] = gl_simp_pressure
+		# parsed_data = sensor_data_to_telemetry_format(parsed_sensor_data)
+		# if gl_mode == "SIM":
+		# 	parsed_sensor_data[Data.attribute_idx["Pressure"]] = gl_simp_pressure
 
 		# parsed_data = "{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{}".format(
 		# 	gl_TEAM_ID,
@@ -394,36 +395,40 @@ if __name__ == "__main__":
 		# 	3.0
 		# )
 
+		print(parsed_sensor_data)
 
-		# if the command exists and previous command time and current command time are different
-		if (gnd_station_cmd != None and gnd_station_cmd_time != gnd_station_prev_cmd_time):
-			# update past ground station command time
-			gnd_station_prev_cmd_time = gnd_station_prev_cmd_time
-			# parse the command from the ground station
-			command_number, arguments = parse_command(gnd_station_cmd)
-			# call the appropriate function
-			call_CANSAT_ops(command_number, arguments, parsed_sensor_data)
+		#UNCOMMENT
+		# # if the command exists and previous command time and current command time are different
+		# if (gnd_station_cmd != None and gnd_station_cmd_time != gnd_station_prev_cmd_time):
+		# 	# update past ground station command time
+		# 	gnd_station_prev_cmd_time = gnd_station_prev_cmd_time
+		# 	# parse the command from the ground station
+		# 	command_number, arguments = parse_command(gnd_station_cmd)
+		# 	# call the appropriate function
+		# 	call_CANSAT_ops(command_number, arguments, parsed_sensor_data)
 
 		cur_time = current_mission_time()
-		# cur_time = datetime.now()
-		# parsed_data = "{},{},{}".format(gl_TEAM_ID,cur_time,gnd_station_cmd)
+		# # cur_time = datetime.now()
+		# # parsed_data = "{},{},{}".format(gl_TEAM_ID,cur_time,gnd_station_cmd)
 
-		# send data to the ground station
-		if gl_telemtry_status == "ON":
-			if gl_prev_tel_time == None:
-				# time.sleep(5)
-				gl_prev_tel_time = cur_time
-				send_telemetry(parsed_data)
+		# # send data to the ground station
+		# if gl_telemtry_status == "ON":
+		# 	if gl_prev_tel_time == None:
+		# 		# time.sleep(5)
+		# 		gl_prev_tel_time = cur_time
+		# 		send_telemetry(parsed_data)
 
-			if cur_time - gl_prev_tel_time >= timedelta(seconds=gl_telemetry_time_period):
-				send_telemetry(parsed_data)
-				gl_prev_tel_time = cur_time
+		# 	if cur_time - gl_prev_tel_time >= timedelta(seconds=gl_telemetry_time_period):
+		# 		send_telemetry(parsed_data)
+		# 		gl_prev_tel_time = cur_time
 
-		# save the data through processor resets
-		save_through_reset()
+		# # save the data through processor resets
+		# save_through_reset()
+		#UNCOMMENT
+		time.sleep(1)
 
 		if (cur_time - start_time >= timedelta(seconds=15)):
-			parsed_data = "{},{},{}".format(gl_TEAM_ID,cur_time,"STOP")
-			send_telemetry(parsed_data)
-			cansat.close()
+			# parsed_data = "{},{},{}".format(gl_TEAM_ID,cur_time,"STOP")
+			# send_telemetry(parsed_data)
+			# cansat.close()
 			break
