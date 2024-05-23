@@ -36,7 +36,6 @@ class DS3231_Sensor:
 	
 	def _read_time(self) -> List[int]:
 		time1 = self._bus.read_i2c_block_data(DS3231_ADDRESS, 0x00, 9)
-		self._raw_time = time1
 		self._seconds = time1[0]
 		self._minutes = time1[1]
 		self._hours = time1[2]
@@ -45,16 +44,22 @@ class DS3231_Sensor:
 		self._month = time1[5]
 		self._year = time1[6]
 
+		self._raw_time = time1
 		return time1
 	
 	def _bcd_to_int(bcd, n = 2):
 		return int(('%x' % bcd)[-n:])
 	
-	def get_telemetry_time(self) -> str:
+	def _get_telemetry_time(self) -> str:
 		self._read_time()
 		time_tel = tuple(self._bcd_to_int(t) for t in(self._raw_time))
 		self.telemetry_time = time_tel
 		return time_tel
+	
+	def read_values(self) -> tuple[List[int], str]:
+		telemetry = self._get_telemetry_time()
+		raw = self._raw_time
+		return raw, telemetry
 
 # def bcd_to_int(bcd, n=2):
 # 	return int(('%x' % bcd)[-n:])
