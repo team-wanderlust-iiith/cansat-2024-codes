@@ -27,9 +27,11 @@ import FSW_Data as Data
 # import electronics libraries
 from digi.xbee.devices import XBeeDevice, RemoteXBeeDevice, XBee64BitAddress # XBee
 import AHT21B	# Temperature
-import BMP390 # Altitude, Pressure, Temperature
+# import BMP390 # Altitude, Pressure, Temperature
+from BMP390 import BMP390_Sensor
 import MPU6050	# Aceeleration, Gyroscope, Temperature
 import MS4525DO	# Air Speed
+from FSW_Sensors import Sensors
 
 # global constants
 gl_TEAM_ID = 2085
@@ -74,6 +76,10 @@ gl_mission_time = None
 gl_mission_init_time = None
 gl_system_init_time = None
 
+# Sensors
+# BMP390 = BMP390_Sensor()
+sensors = Sensors()
+
 
 def data_receive_callback(xbee_message):
 	"""Function to process the received message."""
@@ -108,20 +114,26 @@ def get_sensor_data():
 
 	data = {}
 	# data[Data.attribute_idx["altitude"]] = BMP390.readAltitude()
-	data[Data.attribute_idx["air_speed"]] = MS4525DO.readAirSpeed()
+	data[Data.attribute_idx["altitude"]] = sensors.altitude
+	# data[Data.attribute_idx["air_speed"]] = MS4525DO.readAirSpeed()
+	data[Data.attribute_idx["air_speed"]] = sensors.air_speed
 	# HS_deployed
 	# PC_deployed
-	data[Data.attribute_idx["temperature"]] = AHT21B.readTemperature()
-	data[Data.attribute_idx["pressure"]] = BMP390.readPressure()
-	# voltage
-	# GPS_time
-	# GPS_altitude
-	# GPS_latitude
-	# GPS_longitude
-	# GPS_sats
-	data[Data.attribute_idx["tiltX"]] = MPU6050.readGyroX()
-	data[Data.attribute_idx["tiltY"]] = MPU6050.readGyroY()
-	# rotZ
+	# data[Data.attribute_idx["temperature"]] = AHT21B.readTemperature()
+	data[Data.attribute_idx["temperature"]] = sensors.temperature
+	# data[Data.attribute_idx["pressure"]] = BMP390.readPressure()
+	data[Data.attribute_idx["pressure"]] = sensors.pressure
+	data[Data.attribute_idx["voltage"]] = sensors.voltage
+	data[Data.attribute_idx["GPS_time"]] = sensors.voltage
+	data[Data.attribute_idx["GPS_altitude"]] = sensors.voltage
+	data[Data.attribute_idx["GPS_latitude"]] = sensors.voltage
+	data[Data.attribute_idx["GPS_longitude"]] = sensors.voltage
+	data[Data.attribute_idx["GPS_sats"]] = sensors.voltage
+	# data[Data.attribute_idx["tiltX"]] = MPU6050.readGyroX()
+	# data[Data.attribute_idx["tiltY"]] = MPU6050.readGyroY()
+	data[Data.attribute_idx["tiltX"]] = sensors.tilt_X
+	data[Data.attribute_idx["tiltY"]] = sensors.tilt_Y
+	data[Data.attribute_idx["rotZ"]] = sensors.rotation_Z
 
 	# telemetry = "{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{}".format(
 	# 	gl_TEAM_ID,
