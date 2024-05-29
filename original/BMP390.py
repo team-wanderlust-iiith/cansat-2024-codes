@@ -1,13 +1,13 @@
 from time import sleep
 import board
-import adafruit_bmp3xx
+import Adafruit_BMP3xx
 #from smbus2 import SMBus
 
 #i2c = SMBus(1)
 
 def setup():
 	i2c = board.I2C()
-	sensor = adafruit_bmp3xx.BMP3XX_I2C(i2c)
+	sensor = Adafruit_BMP3xx.BMP3XX_I2C(i2c)
 	sensor.filter_coefficient = 128
 
 	return sensor

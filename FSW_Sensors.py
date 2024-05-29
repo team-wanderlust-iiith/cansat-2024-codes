@@ -12,15 +12,31 @@ class Sensors:
 	Class for all sensors combined.
 	"""
 
+	def _sensor_init(self):
+		while True:
+			try:
+#				print("Initilising Sensors.")
+				self._bmp390 = BMP390_Sensor()
+				self._ads1115 = ADS1115_Sensor()
+				self._aht21b = AHT21B_Sensor()
+#				self._ds3231 = DS3231_Sensor()
+				self._mpu6050 = MPU6050_Sensor()
+				self._ms4525do = MS4525DO_Sensor()
+			except:
+				print("Error initialising. Trying again.")
+			else:
+				break
+
+
 	def __init__(self) -> None:
 		"""
 		Class constructor. Initialises a :class:`Sensors` object,
 		along with the appropriate sensor modules and values.
 		"""
-
+		self._sensor_init()
 		# Sensor modules and individual values.
 		## BMP390
-		self._bmp390 = BMP390_Sensor()
+#		self._bmp390 = BMP390_Sensor()
 		self._bmp390_temperature: float = None
 		self._bmp390_pressure: float = None
 		self._bmp390_altitude: float = None
@@ -30,14 +46,14 @@ class Sensors:
 		self._ads1115_voltage_channel_1: float = None
 		# self._ads1115_voltage: float = None
 		## AHT21B
-		self._aht21b = AHT21B_Sensor()
+#		self._aht21b = AHT21B_Sensor()
 		self._aht21b_temperature: float = None
 		## DS3231
-		self._ds3231 = DS3231_Sensor()
+#		self._ds3231 = DS3231_Sensor()
 		self._ds3231_raw_time: List[int] = None
 		self._ds3231_telemetry_time: str = None
 		## MPU6050
-		self._mpu6050 = MPU6050_Sensor()
+#		self._mpu6050 = MPU6050_Sensor()
 		self._mpu6050_temperature: float = None
 		self._mpu6050_acc_x: float = None
 		self._mpu6050_acc_y: float = None
@@ -46,7 +62,7 @@ class Sensors:
 		self._mpu6050_gyro_y: float = None
 		self._mpu6050_gyro_z: float = None
 		## MS4525DO
-		self._ms4525do = MS4525DO_Sensor()
+#		self._ms4525do = MS4525DO_Sensor()
 		self._ms4525do_pressure: float = None
 		self._ms4525do_air_speed: float = None
 		pass ## Add other sensors
@@ -64,6 +80,7 @@ class Sensors:
 		self.GPS_sats: int = None
 		self.tilt_X: float = None
 		self.tilt_Y: float = None
+		self.telemetry_time: str = None
 		self.rotation_Z: float = None
 		self.optional_data: str = None
 
@@ -155,36 +172,36 @@ class Sensors:
 		return self._ds3231_raw_time, self._ds3231_telemetry_time
 
 	def _calc_pressure(self) -> float:
-		pressure = 0
-		self._bmp390_pressure
-		self._ms4525do_pressure
+		pressure = self._bmp390_pressure/2 + self._ms4525do_pressure/2
 
 		return pressure
 
 	def _calc_temperature(self) -> float:
-		temperature = 0
-		self._aht21b_temperature
-		self._bmp390_temperature
-		self._mpu6050_temperature
+		temperature = self._aht21b_temperature/3 + self._bmp390_temperature/3 + self._mpu6050_temperature/3
 
-		return temperature
+#		return temperature
+		return self._aht21b_temperature
 
 	def _calc_voltage(self) -> float:
-		return self._ads1115_voltage_channel_0
+		return self._ads1115_voltage_channel_0 + self._ads1115_voltage_channel_1
 
 	def update_sensor_values(self):
-		self._update_ads1115_values()
-		self._update_aht21b_values()
-		self._update_bmp390_values()
-		self._update_ds3231_values()
-		self._update_mpu6050_values()
-		self._update_ms4525do_values()
-
-		return
+		try:
+			self._update_ads1115_values()
+			self._update_aht21b_values()
+			self._update_bmp390_values()
+#			self._update_ds3231_values()
+			self._update_mpu6050_values()
+			self._update_ms4525do_values()
+		except:
+			return False
+		else:
+			return True
 
 	def update_values(self, update_raw=False):
 		if update_raw:
-			self.update_sensor_values()
+			while not self.update_sensor_values():
+				print("Trying to read again.")
 
 		self.air_speed = self._ms4525do_air_speed
 		self.altitude = self._bmp390_altitude
@@ -197,8 +214,9 @@ class Sensors:
 		self.pressure = self._calc_pressure()
 		self.rotation_Z = self._mpu6050_gyro_z
 		self.temperature = self._calc_temperature()
-		# self.tilt_X
-		# self.tilt_Y
+		self.telemetry_time = self._ds3231_telemetry_time
+		self.tilt_X = self._mpu6050_gyro_x
+		self.tilt_Y = self._mpu6050_gyro_y
 		self.voltage = self._calc_voltage()
 
 		return
@@ -218,6 +236,7 @@ class Sensors:
 			self.tilt_X,
 			self.tilt_Y,
 			self.rotation_Z,
+			self.telemetry_time,
 			self.optional_data
 		]
 

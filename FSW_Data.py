@@ -100,7 +100,7 @@ class Data:
 			21: self.optional_data
 		}
 
-	
+
 	def get_parsed_data(self):
 		self.parsed_data = []
 		for idx in range(len(self.idx_attribute)):
@@ -131,7 +131,7 @@ class Data:
 class Sensor_Data:
 	def __init__(self, sensor_data):
 		self.sensor_data = sensor_data
-	   
+
 		self.altitude = self.get_idx(attribute_idx["altitude"])
 		self.air_speed = self.get_idx(attribute_idx["air_speed"])
 		self.HS_deployed = self.get_idx(attribute_idx["HS_deployed"])
@@ -166,7 +166,7 @@ class Sensor_Data:
 			19: self.rotZ,
 			21: self.optional_data
 		}
-	
+
 	def get_parsed_data(self):
 		self.parsed_data = {}
 		for idx in range(len(self.idx_attribute)):

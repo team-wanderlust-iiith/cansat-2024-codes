@@ -9,7 +9,7 @@ import time
 from typing import List
 
 ADS1115_ADDR = 0x48
-ADS1115_WAIT_SECONDS = 1
+ADS1115_WAIT_SECONDS = 0.25
 CHANNEL_RANGE_BYTE = 0x03
 CONFIGURATION_REGISTER = 0x01
 READ_REGISTER = 0x00
@@ -34,7 +34,7 @@ class ADS1115_Sensor:
 		self._channel_1: float = None
 
 		return
-	
+
 	def _read_voltage_channel_0(self) -> float:
 		"""
 		Calculates the channel 0 voltage value from the sensor data and
@@ -58,7 +58,7 @@ class ADS1115_Sensor:
 
 		self._channel_0 = raw_adc
 		return raw_adc
-	
+
 	def _read_voltage_channel_1(self) -> float:
 		"""
 		Calculates the channel 1 voltage value from the sensor data and
@@ -82,21 +82,21 @@ class ADS1115_Sensor:
 
 		self._channel_1 = raw_adc
 		return raw_adc
-	
+
 	def channel_0(self) -> float:
 		"""
 		Returns:
 			`voltage`: Channel 0 voltage value.
 		"""
 		return self._channel_0
-	
+
 	def channel_1(self) -> float:
 		"""
 		Returns:
 			`voltage`: Channel 1 voltage value.
 		"""
 		return self._channel_1
-	
+
 	def read_values(self) -> List[float]:
 		"""
 		Calculates the channel 0 and channel 1 voltages from the sensor data
@@ -116,6 +116,7 @@ if __name__ == "__main__":
 	sensor = ADS1115_Sensor()
 	while True:
 		values = sensor.read_values()
+		print(values[0]+values[1])
 		print("Channel 0:", values[0])
 		print("Channel 1:", values[1])
 		time.sleep(1)

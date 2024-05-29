@@ -33,7 +33,7 @@ class DS3231_Sensor:
 		self.telemetry_time: str = None
 
 		return
-	
+
 	def _read_time(self) -> List[int]:
 		time1 = self._bus.read_i2c_block_data(DS3231_ADDRESS, 0x00, 9)
 		self._seconds = time1[0]
@@ -44,18 +44,26 @@ class DS3231_Sensor:
 		self._month = time1[5]
 		self._year = time1[6]
 
-		self._raw_time = time1
-		return time1
-	
+		self._raw_time = [
+			self._seconds,
+			self._minutes,
+			self._hours,
+			self._day,
+			self._week,
+			self._month,
+			self._year
+		]
+		return self._raw_time
+
 	def _bcd_to_int(bcd, n = 2):
 		return int(('%x' % bcd)[-n:])
-	
+
 	def _get_telemetry_time(self) -> str:
-		self._read_time()
-		time_tel = tuple(self._bcd_to_int(t) for t in(self._raw_time))
+		raw_time = self._read_time()
+		time_tel = tuple(self._bcd_to_int(t) for t in(raw_time))
 		self.telemetry_time = time_tel
 		return time_tel
-	
+
 	def read_values(self) -> tuple[List[int], str]:
 		telemetry = self._get_telemetry_time()
 		raw = self._raw_time
@@ -86,5 +94,5 @@ class DS3231_Sensor:
 if __name__ == "__main__":
 	sensor = DS3231_Sensor()
 	while True:
-		print(sensor.get_telemetry_time())
+		print(sensor.read_values()[0])
 		print (time.strftime('%H:%M:%S'))

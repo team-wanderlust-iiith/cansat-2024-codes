@@ -17,9 +17,9 @@ class BMP390_Sensor():
 		# Initialise bus.
 		self._bus = SMBus(1)
 		# Configure the device.
-#		self._bus.write_byte_data(0x77, 0x1B, 0x13)
-#		while self._bus.read_byte_data(0x77, 0x03) & 0x60 != 0x60:
-#			time.sleep(0.001)
+		self._bus.write_byte_data(0x77, 0x1B, 0x13)
+		while self._bus.read_byte_data(0x77, 0x03) & 0x60 != 0x60:
+			time.sleep(0.001)
 
 		# Define other values.
 		self._coeff: tuple[Any, ...] = None
@@ -31,18 +31,10 @@ class BMP390_Sensor():
 
 		return
 
-	def _setup(self):
-		# Configure the device.
-		self._bus.write_byte_data(0x77, 0x1B, 0x13)
-		while self._bus.read_byte_data(0x77, 0x03) & 0x60 != 0x60:
-			time.sleep(0.001)
-
-
 	def _get_data(self):
 		"""
 		Reads the raw ADC data from the BMP390 sensor.
 		"""
-#		self._setup()
 		# Read raw ADC data for pressure and from the sensor.
 		self._data = self._bus.read_i2c_block_data(0x77, 0x04, 6)
 
@@ -64,8 +56,6 @@ class BMP390_Sensor():
 		Returns:
 			`temperature`: Temperature value.
 		"""
-		# Configure the device.
-		self._setup()
 		# Get the raw ADC data.
 		self._get_data()
 		# Get required coefficients.
@@ -106,11 +96,6 @@ class BMP390_Sensor():
 		Returns:
 			`pressure`: Pressure value.
 		"""
-		# Configure the device.
-#		self._setup()
-
-		# Get temperature value.
-		temperature = self._calc_temperature()
 		# Get the raw ADC data.
 		self._get_data()
 		# Get required coefficients.
@@ -131,6 +116,9 @@ class BMP390_Sensor():
 		P9 = self._coeff[11] / 2**48.0
 		P10 = self._coeff[12] / 2**48.0
 		P11 = self._coeff[13] / 2**65.0
+		
+		# Get temperature value.
+		temperature = self._calc_temperature()
 
 		# Calculate temperature value.
 		pd1 = P6 * temperature

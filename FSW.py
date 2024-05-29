@@ -43,27 +43,30 @@ gnd_station_prev_cmd_time: datetime = None
 # XBee Settings.
 # Ground Station Constants
 GROUND_STATION_64BIT_ADDRESS_STRING = "0013A200410908BE"
+#GROUND_STATION_64BIT_ADDRESS_STRING = "0013A2004106F519"
 GROUND_STATION_XBEE_64BIT_ADDRESS = XBee64BitAddress.from_hex_string(GROUND_STATION_64BIT_ADDRESS_STRING)
 
 # Cansat Settings
-CANSAT_PORT = "COM4" # Update based on the COM port the XBee is connected to.
+CANSAT_PORT = "/dev/serial0" # Update based on the COM port the XBee is connected to.
 CANSAT_BAUD_RATE = 9600
 PANID = b"\x20\x85" # HEX 2085
 
 # Instantiate a local XBee object for CANSAT.
 cansat = XBeeDevice(CANSAT_PORT, CANSAT_BAUD_RATE)
 # # Open CANSAT connection.
-# cansat.open()
+cansat.open()
 # # Set the PAN ID and destination address of the device.
-# cansat.set_pan_id(bytearray(PANID))
-# cansat.set_dest_address(GROUND_STATION_XBEE_64BIT_ADDRESS)
+cansat.set_pan_id(bytearray(PANID))
+cansat.set_dest_address(GROUND_STATION_XBEE_64BIT_ADDRESS)
+
+print("Initialised CanSat XBee.")
 
 # Instantiate a remote XBee object for Ground Station.
 gnd_station = RemoteXBeeDevice(cansat, GROUND_STATION_XBEE_64BIT_ADDRESS)
 
 # global variables
 gl_packets_sent = 0
-gl_mode = "Flight"
+gl_mode = "F"
 gl_state = "NA"
 gl_telemtry_status = "OFF"
 gl_previous_command = None
@@ -73,12 +76,14 @@ gl_telemetry_time_period = 1  # in seconds
 gl_simp_pressure = 101325
 
 gl_mission_time = None
-gl_mission_init_time = None
-gl_system_init_time = None
+gl_mission_init_time: datetime = datetime.now(timezone.utc).replace(tzinfo=None)
+gl_system_init_time: datetime = datetime.now(timezone.utc).replace(tzinfo=None)
 
 # Sensors
 # BMP390 = BMP390_Sensor()
 sensors = Sensors()
+print("Initialised Sensors.")
+gl_stop_code = False
 
 
 def data_receive_callback(xbee_message):
@@ -92,6 +97,8 @@ def data_receive_callback(xbee_message):
 	gnd_station_cmd = xbee_message.data.decode("utf8")
 	gnd_station_cmd_time = datetime.now()
 	# print("Received data from {}: {}".format(address, message))
+	if gnd_station_cmd.split(',')[-1] == "EXIT":
+		gl_stop_code = True
 	print(gnd_station_cmd)
 
 	pass
@@ -104,37 +111,39 @@ def get_sensor_data():
 	global gl_TEAM_ID, gl_mission_time, gl_packets_sent, gl_mode, gl_state, gl_previous_command
 
 	# telemetry format
-	# <TEAM_ID>, <MISSION_TIME>, <PACKET_COUNT>, <MODE>, <STATE>, 
-	# <ALTITUDE>, <AIR_SPEED>, <HS_DEPLOYED>, <PC_DEPLOYED>, 
-	# <TEMPERATURE>, <PRESSURE>, <VOLTAGE>, <GPS_TIME>, <GPS_ALTITUDE>, 
-	# <GPS_LATITUDE>, <GPS_LONGITUDE>, <GPS_SATS>, <TILT_X>, <TILT_Y>, 
+	# <TEAM_ID>, <MISSION_TIME>, <PACKET_COUNT>, <MODE>, <STATE>,
+	# <ALTITUDE>, <AIR_SPEED>, <HS_DEPLOYED>, <PC_DEPLOYED>,
+	# <TEMPERATURE>, <PRESSURE>, <VOLTAGE>, <GPS_TIME>, <GPS_ALTITUDE>,
+	# <GPS_LATITUDE>, <GPS_LONGITUDE>, <GPS_SATS>, <TILT_X>, <TILT_Y>,
 	# <ROT_Z>, <CMD_ECHO>
 
 	# Read sensor data
-	data = sensors.get_values(True)
+	sensor_data = sensors.get_values(True)
 
-	# data = {}
+	data = {}
 	# # data[Data.attribute_idx["altitude"]] = BMP390.readAltitude()
-	# data[Data.attribute_idx["altitude"]] = sensors.altitude
+	data[Data.attribute_idx["altitude"]] = round(sensors.altitude, 1)
 	# # data[Data.attribute_idx["air_speed"]] = MS4525DO.readAirSpeed()
-	# data[Data.attribute_idx["air_speed"]] = sensors.air_speed
+	data[Data.attribute_idx["air_speed"]] = round(sensors.air_speed, 1)
 	# # HS_deployed
+	data[Data.attribute_idx["HS_deployed"]] = 'N'
 	# # PC_deployed
+	data[Data.attribute_idx["PC_deployed"]] = 'N'
 	# # data[Data.attribute_idx["temperature"]] = AHT21B.readTemperature()
-	# data[Data.attribute_idx["temperature"]] = sensors.temperature
+	data[Data.attribute_idx["temperature"]] = round(sensors.temperature, 1)
 	# # data[Data.attribute_idx["pressure"]] = BMP390.readPressure()
-	# data[Data.attribute_idx["pressure"]] = sensors.pressure
-	# data[Data.attribute_idx["voltage"]] = sensors.voltage
-	# data[Data.attribute_idx["GPS_time"]] = sensors.voltage
-	# data[Data.attribute_idx["GPS_altitude"]] = sensors.voltage
-	# data[Data.attribute_idx["GPS_latitude"]] = sensors.voltage
-	# data[Data.attribute_idx["GPS_longitude"]] = sensors.voltage
-	# data[Data.attribute_idx["GPS_sats"]] = sensors.voltage
+	data[Data.attribute_idx["pressure"]] = round(sensors.pressure, 1)
+	data[Data.attribute_idx["voltage"]] = round(sensors.voltage, 1)
+	data[Data.attribute_idx["GPS_time"]] = current_mission_time().strftime('%H:%M:%S') #sensors.GPS_time
+	data[Data.attribute_idx["GPS_altitude"]] = 0.0 #round(sensors.GPS_altitude, 1)
+	data[Data.attribute_idx["GPS_latitude"]] = 17.4456 #round(sensors.GPS_latitude, 4)
+	data[Data.attribute_idx["GPS_longitude"]] = 78.3497 #round(sensors.GPS_longitude, 4)
+	data[Data.attribute_idx["GPS_sats"]] = 0 #sensors.GPS_sats
 	# # data[Data.attribute_idx["tiltX"]] = MPU6050.readGyroX()
 	# # data[Data.attribute_idx["tiltY"]] = MPU6050.readGyroY()
-	# data[Data.attribute_idx["tiltX"]] = sensors.tilt_X
-	# data[Data.attribute_idx["tiltY"]] = sensors.tilt_Y
-	# data[Data.attribute_idx["rotZ"]] = sensors.rotation_Z
+	data[Data.attribute_idx["tiltX"]] = round(sensors.tilt_X, 2)
+	data[Data.attribute_idx["tiltY"]] = round(sensors.tilt_Y, 2)
+	data[Data.attribute_idx["rotZ"]] = round(sensors.rotation_Z, 1)
 
 	# telemetry = "{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{}".format(
 	# 	gl_TEAM_ID,
@@ -172,14 +181,38 @@ def onboard_telemetry_storage(parsed_data):
 	return 0
 
 
-def send_telemetry(parsed_data):
+def send_telemetry(data):
 	# send data to the ground station
 	# this function needs to be completed
-	cansat.send_data(gnd_station, parsed_data)
-	global gl_packets_sent
-	onboard_telemetry_storage(parsed_data)
-	gl_packets_sent += 1
-	pass
+
+	global gnd_station
+	MAX_PACKET_SIZE = 100
+#	print(parsed_data)
+
+#	data = ','.join(map(str, parsed_data))
+#	data = data + ',END_TELEMETRY'
+	segmented_data = [data[i : i + MAX_PACKET_SIZE] for i in range(0, len(data), MAX_PACKET_SIZE)]
+
+	for segment in segmented_data:
+		count = 2
+		while count > 0:
+			try:
+				cansat.send_data(gnd_station, segment)
+			except Exception as e:
+				count -= 1
+				print(e)
+#				print(f"Telemetry transmission failed. Trying {count} more times.")
+			else:
+				print("Transmission success.")
+#				print(str(data))
+				count = 0
+				if 'END_TELEMETRY' in segment:
+					global gl_packets_sent
+#					onboard_telemetry_storage(data)
+					gl_packets_sent += 1
+					return
+	print("Transmission failed.")
+	return
 
 
 def save_through_reset():
@@ -266,21 +299,31 @@ def find_altitude(parsed_sensor_data):
 
 def sensor_data_to_telemetry_format(parsed_sensor_data):
 	# this function will convert the sensor data to the telemetry format
-	data = {}
-	for idx in range(len(Data.attribute_idx)):
-		data[idx] = parsed_sensor_data[idx]
+	# data = {}
+	# for idx in range(len(Data.attribute_idx)):
+	# 	data[idx] = parsed_sensor_data[idx]
 
+	data = parsed_sensor_data
 	data[Data.attribute_idx["teamID"]] = gl_TEAM_ID
-	data[Data.attribute_idx["mission_time"]] = current_mission_time()
+	data[Data.attribute_idx["mission_time"]] = current_mission_time().strftime('%H:%M:%S')
 	data[Data.attribute_idx["packet_count"]] = gl_packets_sent
 	data[Data.attribute_idx["mode"]] = gl_mode
 	data[Data.attribute_idx["state"]] = "NA"
-	data[Data.attribute_idx["altitude"]] = find_altitude(parsed_sensor_data)
+	# data[Data.attribute_idx["altitude"]] = find_altitude(parsed_sensor_data)
 	data[Data.attribute_idx["command_echo"]] = gl_previous_command
+	data[Data.attribute_idx["optional_data"]] = 'END_TELEMETRY'
 
-	datapt = Data.Data(data)
-	parsed_data = datapt.get_parsed_data()
-	return datapt
+#	ordered_data = {}
+#	for i in range(22):
+#		ordered_data[i] = data[i]
+	data = dict(sorted(data.items()))
+#	print(data)
+
+#	datapt = Data.Data(data)
+#	parsed_data = datapt.get_parsed_data()
+#	return parsed_data
+	formatted_data = ','.join(str(value) for value  in  data.values())
+	return formatted_data
 
 
 def parse_command(command):
@@ -297,7 +340,7 @@ def parse_command(command):
 
 def call_CANSAT_ops(command_number, arguments, parsed_sensor_data):
 	# this function will call the appropriate function
-	global gl_telemtry_status, gl_previous_command, gl_beacon_status, gl_mode, gl_simp_pressure
+	global gl_telemtry_status, gl_previous_command, gl_beacon_status, gl_mode, gl_simp_pressure, gl_stop_code
 	# call the appropriate function
 	if command_number == "CX":
 		if arguments[0] == "ON":
@@ -349,6 +392,8 @@ def call_CANSAT_ops(command_number, arguments, parsed_sensor_data):
 			gl_simp_pressure = arguments[0]
 		gl_previous_command = "SIMP{}".format(arguments[0])
 
+	elif command_number == "PX":
+		gl_stop_code = True
 	else:
 		print("Invalid command")
 
@@ -360,15 +405,18 @@ if __name__ == "__main__":
 	# 	continue
 	# this is the main function
 
-	start_time = datetime.now()
+#	global gl_telemetry_status, gl_prev_tel_time, gl_stop_code
+
+	start_time = datetime.now(timezone.utc).replace(tzinfo=None)
+	cur_time = current_mission_time()
 
 	# setting callback function whenever data is received from ground station
 	cansat.add_data_received_callback(data_receive_callback)
 
-	while True:  # this is the loop of the flight software
+	while gl_stop_code == False:  # this is the loop of the flight software
 		# get data from the sensors
 		parsed_sensor_data = get_sensor_data()
-		# parsed_data = sensor_data_to_telemetry_format(parsed_sensor_data)
+		parsed_data = sensor_data_to_telemetry_format(parsed_sensor_data)
 		# if gl_mode == "SIM":
 		# 	parsed_sensor_data[Data.attribute_idx["Pressure"]] = gl_simp_pressure
 
@@ -395,40 +443,50 @@ if __name__ == "__main__":
 		# 	3.0
 		# )
 
-		print(parsed_sensor_data)
+#		if datetime.now(timezone.utc).replace(tzinfo=None) - cur_time > timedelta(seconds = 1):
+#			cur_time = current_mission_time()
+#			parsed_data = parsed_sensor_data
+#			parsed_data.append(str(cur_time))
+#			print(parsed_sensor_data, cur_time)
+#			print(parsed_data)
+#			print(','.join(map(str, parsed_data)))
+#			send_telemetry(','.join(map(str, parsed_data)))
 
 		#UNCOMMENT
-		# # if the command exists and previous command time and current command time are different
-		# if (gnd_station_cmd != None and gnd_station_cmd_time != gnd_station_prev_cmd_time):
-		# 	# update past ground station command time
-		# 	gnd_station_prev_cmd_time = gnd_station_prev_cmd_time
-		# 	# parse the command from the ground station
-		# 	command_number, arguments = parse_command(gnd_station_cmd)
-		# 	# call the appropriate function
-		# 	call_CANSAT_ops(command_number, arguments, parsed_sensor_data)
+		# if the command exists and previous command time and current command time are different
+		if (gnd_station_cmd != None and gnd_station_cmd_time != gnd_station_prev_cmd_time):
+			# update past ground station command time
+			gnd_station_prev_cmd_time = gnd_station_prev_cmd_time
+			# parse the command from the ground station
+			command_number, arguments = parse_command(gnd_station_cmd)
+			# call the appropriate function
+			call_CANSAT_ops(command_number, arguments, parsed_sensor_data)
 
-		cur_time = current_mission_time()
-		# # cur_time = datetime.now()
+		cur_time = datetime.now()
 		# # parsed_data = "{},{},{}".format(gl_TEAM_ID,cur_time,gnd_station_cmd)
 
-		# # send data to the ground station
-		# if gl_telemtry_status == "ON":
-		# 	if gl_prev_tel_time == None:
-		# 		# time.sleep(5)
-		# 		gl_prev_tel_time = cur_time
-		# 		send_telemetry(parsed_data)
+		# send data to the ground station
+		if gl_telemtry_status == "ON":
+			if gl_prev_tel_time == None:
+				# time.sleep(5)
+				gl_prev_tel_time = cur_time
+#				send_telemetry(parsed_data)
 
-		# 	if cur_time - gl_prev_tel_time >= timedelta(seconds=gl_telemetry_time_period):
-		# 		send_telemetry(parsed_data)
-		# 		gl_prev_tel_time = cur_time
+			if cur_time - gl_prev_tel_time >= timedelta(seconds=gl_telemetry_time_period):
+#				parsed_data = parsed_sensor_data
+				print(parsed_data)
+				# parsed_data.append(cur_time.time())
+				send_telemetry(parsed_data)
+				gl_prev_tel_time = cur_time
 
 		# # save the data through processor resets
 		# save_through_reset()
 		#UNCOMMENT
-		time.sleep(1)
 
-		if (cur_time - start_time >= timedelta(seconds=15)):
+#		if (cur_time - start_time >= timedelta(seconds=15)):
 			# parsed_data = "{},{},{}".format(gl_TEAM_ID,cur_time,"STOP")
 			# send_telemetry(parsed_data)
 			# cansat.close()
-			break
+#			break
+
+	cansat.close()
